@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+
+}
+
+html {
+  /* font-size: 62.5%; /* 1 rem is 10px */
+}
