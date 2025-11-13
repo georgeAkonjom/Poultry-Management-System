@@ -4,7 +4,7 @@ from .models import *
 
 # Register your models here.
 admin.site.register(
-    BirdBatches,
+    BirdBatch,
 )
 
 admin.site.register(
@@ -12,11 +12,11 @@ admin.site.register(
 )
 
 admin.site.register(
-    Losses,
+    Loss,
 )
 
 admin.site.register(
-    Expenses,
+    Expense,
 )
 
 admin.site.register(
