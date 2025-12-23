@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LossDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [loss, setLoss] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,6 +29,22 @@ export default function LossDetail() {
     fetchLoss();
   }, [id]);
 
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this loss record?")) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/losses/${id}/`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        navigate("/");
+      } catch (e) {
+        setError(e.message);
+      }
+    }
+  };
+
   if (loading) {
     return <div className="max-w-4xl mx-auto p-6">Loading...</div>;
   }
@@ -42,8 +59,19 @@ export default function LossDetail() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <header className="mb-6">
+      <header className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Loss Details</h1>
+        <div>
+          <Link to={`/loss/edit/${id}`} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+            Edit
+          </Link>
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Delete
+          </button>
+        </div>
       </header>
       <main className="bg-white shadow rounded p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">

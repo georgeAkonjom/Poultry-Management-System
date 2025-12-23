@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import BirdBatch, Expense, Income, Loss
+from .models import BirdBatch, Expense, Loss, Sale
 from .serializers import *
 
 
@@ -137,22 +137,22 @@ class LossView(APIView):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class IncomeView(APIView):
+class SaleView(APIView):
     def get(self, request, pk=None):
         if pk:
             try:
-                income = Income.objects.get(pk=pk)
-                serializer = IncomeSerializer(income)
+                sale = Sale.objects.get(pk=pk)
+                serializer = SaleSerializer(sale)
                 return Response(serializer.data)
-            except Income.DoesNotExist:
+            except Sale.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
         else:
-            incomes = Income.objects.all()
-            serializer = IncomeSerializer(incomes, many=True)
+            sales = Sale.objects.all()
+            serializer = SaleSerializer(sales, many=True)
             return Response(serializer.data)
 
     def post(self, request):
-        serializer = IncomeSerializer(data=request.data)
+        serializer = SaleSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
@@ -160,10 +160,10 @@ class IncomeView(APIView):
 
     def put(self, request, pk):
         try:
-            income = Income.objects.get(pk=pk)
-        except Income.DoesNotExist:
+            sale = Sale.objects.get(pk=pk)
+        except Sale.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = IncomeSerializer(income, data=request.data)
+        serializer = SaleSerializer(sale, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -171,10 +171,10 @@ class IncomeView(APIView):
 
     def delete(self, request, pk):
         try:
-            income = Income.objects.get(pk=pk)
-        except Income.DoesNotExist:
+            sale = Sale.objects.get(pk=pk)
+        except Sale.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        income.delete()
+        sale.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

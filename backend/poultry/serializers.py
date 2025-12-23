@@ -4,20 +4,26 @@ from .models import *
 
 
 class BirdBatchSerializer(serializers.ModelSerializer):
+    total_amount = serializers.ReadOnlyField()
+
     class Meta:
         model = BirdBatch
         fields = "__all__"
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    total_amount = serializers.ReadOnlyField()
+
     class Meta:
         model = Expense
         fields = "__all__"
 
 
-class IncomeSerializer(serializers.ModelSerializer):
+class SaleSerializer(serializers.ModelSerializer):
+    total_amount = serializers.ReadOnlyField()
+
     class Meta:
-        model = Income
+        model = Sale
         fields = "__all__"
 
 

@@ -8,7 +8,7 @@ admin.site.register(
 )
 
 admin.site.register(
-    Income,
+    Sale,
 )
 
 admin.site.register(

@@ -23,7 +23,7 @@ export default function PoultryForms() {
         <nav className="space-x-2">
           <button onClick={() => setView("batch")} className={`px-3 py-1 rounded ${view === "batch" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Batch</button>
           <button onClick={() => setView("expense")} className={`px-3 py-1 rounded ${view === "expense" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Expense</button>
-          <button onClick={() => setView("income")} className={`px-3 py-1 rounded ${view === "income" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Income</button>
+          <button onClick={() => setView("income")} className={`px-3 py-1 rounded ${view === "income" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Sale</button>
           <button onClick={() => setView("loss")} className={`px-3 py-1 rounded ${view === "loss" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Loss</button>
         </nav>
       </header>
@@ -31,7 +31,7 @@ export default function PoultryForms() {
       <main className="bg-white shadow rounded p-6">
         {view === "batch" && <BatchForm />}
         {view === "expense" && <ExpenseForm />}
-        {view === "income" && <IncomeForm />}
+        {view === "income" && <SaleForm />}
         {view === "loss" && <LossForm />}
       </main>
     </div>
@@ -47,7 +47,8 @@ function BatchForm() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/birdbatches/`);
       const data = await response.json();
-      setBatches(data);
+      const sortedData = data.sort((a, b) => b.id - a.id);
+      setBatches(sortedData);
     } catch (e) {
       console.error(e);
     }
@@ -123,21 +124,26 @@ function BatchForm() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr>
+              <th className="p-2 border-b">Batch Name</th>
               <th className="p-2 border-b">Bird Type</th>
               <th className="p-2 border-b">Quantity</th>
               <th className="p-2 border-b">Date In</th>
             </tr>
           </thead>
           <tbody>
-            {batches.map((batch) => (
+            {batches.slice(0, 10).map((batch) => (
               <tr key={batch.id}>
-                <td className="p-2 border-b"><Link to={`/batch/${batch.id}`} className="text-blue-600 hover:underline">{batch.bird_type}</Link></td>
+                <td className="p-2 border-b"><Link to={`/batch/${batch.id}`} className="text-blue-600 hover:underline">{batch.batch_name}</Link></td>
+                <td className="p-2 border-b">{batch.bird_type}</td>
                 <td className="p-2 border-b">{batch.quantity}</td>
                 <td className="p-2 border-b">{batch.date_in}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="mt-4">
+          <Link to="/all-batches" className="text-blue-600 hover:underline">View All Batches</Link>
+        </div>
       </div>
     </div>
   );
@@ -152,7 +158,8 @@ function ExpenseForm() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/expenses/`);
       const data = await response.json();
-      setExpenses(data);
+      const sortedData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setExpenses(sortedData);
     } catch (e) {
       console.error(e);
     }
@@ -182,21 +189,28 @@ function ExpenseForm() {
     <div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Batch ID (optional)</label>
-          <input {...register("batch_id", { valueAsNumber: true })} className="mt-1 block w-40 rounded border p-2" />
+          <label className="block text-sm font-medium">Batch ID</label>
+          <input {...register("batch_id", { valueAsNumber: true, required: true })} className="mt-1 block w-40 rounded border p-2" />
+          {errors.batch_id && <span className="text-red-600 text-sm">Required</span>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Expense type</label>
-          <input {...register("expense_type", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.expense_type && <span className="text-red-600 text-sm">Required</span>}
+          <label className="block text-sm font-medium">Item</label>
+          <input {...register("item", { required: true })} className="mt-1 block w-full rounded border p-2" />
+          {errors.item && <span className="text-red-600 text-sm">Required</span>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Quantity</label>
+          <input {...register("quantity", { required: true })} className="mt-1 block w-full rounded border p-2" />
+          {errors.quantity && <span className="text-red-600 text-sm">Required</span>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium">Amount</label>
-            <input type="number" step="0.01" {...register("amount", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.amount && <span className="text-red-600 text-sm">Required</span>}
+            <label className="block text-sm font-medium">Cost Per Unit</label>
+            <input type="number" step="0.01" {...register("cost_per_unit", { required: true })} className="mt-1 block w-full rounded border p-2" />
+            {errors.cost_per_unit && <span className="text-red-600 text-sm">Required</span>}
           </div>
 
           <div>
@@ -222,55 +236,63 @@ function ExpenseForm() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr>
-              <th className="p-2 border-b">Expense Type</th>
-              <th className="p-2 border-b">Amount</th>
               <th className="p-2 border-b">Date</th>
+              <th className="p-2 border-b">Item</th>
+              <th className="p-2 border-b">Cost Per Unit</th>
+              <th className="p-2 border-b">Quantity</th>
+              <th className="p-2 border-b">Total</th>
             </tr>
           </thead>
           <tbody>
-            {expenses.map((expense) => (
+            {expenses.slice(0, 10).map((expense) => (
               <tr key={expense.id}>
-                <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.expense_type}</Link></td>
-                <td className="p-2 border-b">{expense.amount}</td>
-                <td className="p-2 border-b">{expense.date}</td>
+                <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.date}</Link></td>
+                <td className="p-2 border-b">{expense.item}</td>
+                <td className="p-2 border-b">{expense.cost_per_unit}</td>
+                <td className="p-2 border-b">{expense.quantity}</td>
+                <td className="p-2 border-b">{expense.total_amount}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="mt-4">
+          <Link to="/all-expenses" className="text-blue-600 hover:underline">View All Expenses</Link>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ----------------- Income Form ----------------- */
-function IncomeForm() {
+/* ----------------- Sale Form ----------------- */
+function SaleForm() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
-  const [incomes, setIncomes] = useState([]);
+  const [sales, setSales] = useState([]);
 
-  const fetchIncomes = async () => {
+  const fetchSales = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/income/`);
+      const response = await fetch(`${API_BASE_URL}/api/sale/`);
       const data = await response.json();
-      setIncomes(data);
+      const sortedData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setSales(sortedData);
     } catch (e) {
       console.error(e);
     }
   };
 
   useEffect(() => {
-    fetchIncomes();
+    fetchSales();
   }, []);
 
   const onSubmit = async (data) => {
     data.amount = parseFloat(data.amount);
-    console.log("Income payload:", data);
+    console.log("Sale payload:", data);
     try {
-      await fetch(`${API_BASE_URL}/api/income/`, {
+      await fetch(`${API_BASE_URL}/api/sale/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      fetchIncomes();
+      fetchSales();
     } catch (e) {
       console.error(e);
     }
@@ -281,20 +303,27 @@ function IncomeForm() {
     <div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Batch ID (optional)</label>
-          <input {...register("batch_id", { valueAsNumber: true })} className="mt-1 block w-40 rounded border p-2" />
+          <label className="block text-sm font-medium">Batch ID</label>
+          <input {...register("batch_id", { valueAsNumber: true, required: true })} className="mt-1 block w-40 rounded border p-2" />
+          {errors.batch_id && <span className="text-red-600 text-sm">Required</span>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Income type</label>
-          <input {...register("income_type", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.income_type && <span className="text-red-600 text-sm">Required</span>}
+          <label className="block text-sm font-medium">Item</label>
+          <input {...register("item")} className="mt-1 block w-full rounded border p-2" />
+          {errors.item && <span className="text-red-600 text-sm">Required</span>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Price Per Unit</label>
+          <input {...register("cost_per_unit", { required: true })} className="mt-1 block w-full rounded border p-2" />
+          {errors.cost_per_unit && <span className="text-red-600 text-sm">Required</span>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium">Amount</label>
-            <input type="number" step="0.01" {...register("amount", { required: true })} className="mt-1 block w-full rounded border p-2" />
+            <label className="block text-sm font-medium">Quantity</label>
+            <input type="number" step="0.01" {...register("quantity", { required: true })} className="mt-1 block w-full rounded border p-2" />
             {errors.amount && <span className="text-red-600 text-sm">Required</span>}
           </div>
 
@@ -305,42 +334,39 @@ function IncomeForm() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium">Buyer</label>
-          <input {...register("buyer")} className="mt-1 block w-full rounded border p-2" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Description</label>
-          <textarea {...register("description")} className="mt-1 block w-full rounded border p-2" rows={2} />
-        </div>
-
         <div className="flex items-center gap-2">
-          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Income</button>
+          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Sale</button>
           <button type="button" onClick={() => reset()} className="px-4 py-2 rounded bg-slate-100">Reset</button>
         </div>
       </form>
 
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Existing Incomes</h2>
+        <h2 className="text-xl font-semibold mb-4">Existing Sales</h2>
         <table className="w-full text-left border-collapse">
           <thead>
             <tr>
-              <th className="p-2 border-b">Income Type</th>
-              <th className="p-2 border-b">Amount</th>
+              <th className="p-2 border-b">Item</th>
+              <th className="p-2 border-b">Price Per Unit</th>
+              <th className="p-2 border-b">Quantity</th>
               <th className="p-2 border-b">Date</th>
+              <th className="p-2 border-b">Total</th>
             </tr>
           </thead>
           <tbody>
-            {incomes.map((income) => (
-              <tr key={income.id}>
-                <td className="p-2 border-b"><Link to={`/income/${income.id}`} className="text-blue-600 hover:underline">{income.income_type}</Link></td>
-                <td className="p-2 border-b">{income.amount}</td>
-                <td className="p-2 border-b">{income.date}</td>
+            {sales.slice(0, 10).map((sale) => (
+              <tr key={sale.id}>
+                <td className="p-2 border-b"><Link to={`/sale/${sale.id}`} className="text-blue-600 hover:underline">{sale.item}</Link></td>
+                <td className="p-2 border-b">{sale.cost_per_unit}</td>
+                <td className="p-2 border-b">{sale.quantity}</td>
+                <td className="p-2 border-b">{sale.date}</td>
+                <td className="p-2 border-b">{sale.total_amount}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="mt-4">
+          <Link to="/all-sales" className="text-blue-600 hover:underline">View All Sales</Link>
+        </div>
       </div>
     </div>
   );
@@ -355,7 +381,8 @@ function LossForm() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/losses/`);
       const data = await response.json();
-      setLosses(data);
+      const sortedData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setLosses(sortedData);
     } catch (e) {
       console.error(e);
     }
@@ -439,7 +466,7 @@ function LossForm() {
             </tr>
           </thead>
           <tbody>
-            {losses.map((loss) => (
+            {losses.slice(0, 10).map((loss) => (
               <tr key={loss.id}>
                 <td className="p-2 border-b"><Link to={`/loss/${loss.id}`} className="text-blue-600 hover:underline">{loss.cause}</Link></td>
                 <td className="p-2 border-b">{loss.quantity}</td>
@@ -448,6 +475,9 @@ function LossForm() {
             ))}
           </tbody>
         </table>
+        <div className="mt-4">
+          <Link to="/all-losses" className="text-blue-600 hover:underline">View All Losses</Link>
+        </div>
       </div>
     </div>
   );
