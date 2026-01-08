@@ -18,7 +18,3 @@ admin.site.register(
 admin.site.register(
     Expense,
 )
-
-admin.site.register(
-    FinanceSummary,
-)

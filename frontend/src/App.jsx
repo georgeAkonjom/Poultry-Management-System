@@ -12,14 +12,18 @@ import EditBatch from './pages/EditBatch.jsx';
 import EditExpense from './pages/EditExpense.jsx';
 import EditSale from './pages/EditSale.jsx';
 import EditLoss from './pages/EditLoss.jsx';
+import Dashboard from './pages/dash.jsx';
+import BatchSummary from './pages/BatchSummary.jsx';
 import './index.css'
 
 function App() {
   return (
     <Routes>
-      <Route path='/' element={<Poultryform />}></Route>
+      <Route path='/' element={<Dashboard />}></Route>
+      <Route path='/add-batch' element={<Poultryform />}></Route>
       <Route path='/batch/:id' element={<BatchDetail />} />
       <Route path='/batch/edit/:id' element={<EditBatch />} />
+      <Route path='/batch-summary/:id' element={<BatchSummary />} />
       <Route path='/expense/:id' element={<ExpenseDetail />} />
       <Route path='/expense/edit/:id' element={<EditExpense />} />
       <Route path='/sale/:id' element={<SaleDetail />} />

@@ -48,8 +48,3 @@ class Loss(models.Model):
     value_loss = models.IntegerField()
     date = models.DateField()
     notes = models.TextField(200)
-
-
-class FinanceSummary(models.Model):
-    pass
-    # Measure total income, total loss, total expenditure, over a timeframe, from period start to period end, where period start and end are variable? mutable? Not clear on the right terminonogy.

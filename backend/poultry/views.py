@@ -178,14 +178,43 @@ class SaleView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+from django.db.models import F, Sum
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class FinanceSummaryView(APIView):
-    def post(self, request):
-        serializer = FinanceSummarySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+    def get(self, request):
+        batches = BirdBatch.objects.all()
+        summary_data = []
+
+        for batch in batches:
+            total_expenses = (
+                Expense.objects.filter(batch_id=batch.id)
+                .annotate(total_amount=F("cost_per_unit") * F("quantity"))
+                .aggregate(total_expenses=Sum("total_amount"))
+                .get("total_expenses", 0)
+            )
+            total_sales = (
+                Sale.objects.filter(batch_id=batch.id)
+                .annotate(total_amount=F("cost_per_unit") * F("quantity"))
+                .aggregate(total_sales=Sum("total_amount"))
+                .get("total_sales", 0)
+            )
+            total_losses = Loss.objects.filter(batch_id=batch.id).aggregate(
+                total_losses=Sum("value_loss")
+            ).get("total_losses", 0)
+
+            summary_data.append(
+                {
+                    "batch_id": batch.id,
+                    "batch_name": batch.batch_name,
+                    "total_expenses": total_expenses or 0,
+                    "total_sales": total_sales or 0,
+                    "total_losses": total_losses or 0,
+                }
+            )
+
+        return Response(summary_data)
 
 
 def health_check(request):

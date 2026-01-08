@@ -33,7 +33,7 @@ class LossSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class FinanceSummarySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FinanceSummary
-        fields = "__all__"
+# class FinanceSummarySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = FinanceSummary
+#         fields = "__all__"
