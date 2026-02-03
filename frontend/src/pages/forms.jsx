@@ -21,14 +21,14 @@ export default function PoultryForms() {
       <header className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Poultry Management — Forms</h1>
         <nav className="space-x-2">
-          <button onClick={() => setView("batch")} className={`px-3 py-1 rounded ${view === "batch" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Batch</button>
-          <button onClick={() => setView("expense")} className={`px-3 py-1 rounded ${view === "expense" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Expense</button>
-          <button onClick={() => setView("income")} className={`px-3 py-1 rounded ${view === "income" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Sale</button>
-          <button onClick={() => setView("loss")} className={`px-3 py-1 rounded ${view === "loss" ? "bg-slate-800 text-white" : "bg-slate-100"}`}>Loss</button>
+          <Button onClick={() => setView("batch")} variant={view === "batch" ? "default" : "outline"}>Batch</Button>
+          <Button onClick={() => setView("expense")} variant={view === "expense" ? "default" : "outline"}>Expense</Button>
+          <Button onClick={() => setView("income")} variant={view === "income" ? "default" : "outline"}>Sale</Button>
+          <Button onClick={() => setView("loss")} variant={view === "loss" ? "default" : "outline"}>Loss</Button>
         </nav>
       </header>
 
-      <main className="bg-white shadow rounded p-6">
+      <main>
         {view === "batch" && <BatchForm />}
         {view === "expense" && <ExpenseForm />}
         {view === "income" && <SaleForm />}
@@ -38,9 +38,62 @@ export default function PoultryForms() {
   );
 }
 
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { formatCurrency } from "@/lib/utils";
+
+const batchFormSchema = z.object({
+  batch_name: z.string().min(2, {
+    message: "Batch name must be at least 2 characters.",
+  }),
+  bird_type: z.string().min(2, {
+    message: "Bird type must be at least 2 characters.",
+  }),
+  quantity: z.coerce.number().min(1, {
+    message: "Quantity must be at least 1.",
+  }),
+  cost_per_bird: z.coerce.number().min(0.01, {
+    message: "Cost per bird must be at least 0.01.",
+  }),
+  date_in: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Please enter a valid date.",
+  }),
+  notes: z.string().optional(),
+});
+
 /* ----------------- Batch Form ----------------- */
 function BatchForm() {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const form = useForm({
+    resolver: zodResolver(batchFormSchema),
+    defaultValues: {
+      batch_name: "",
+      bird_type: "",
+      quantity: 0,
+      cost_per_bird: 0,
+      date_in: "",
+      notes: "",
+    },
+  });
   const [batches, setBatches] = useState([]);
 
   const fetchBatches = async () => {
@@ -67,57 +120,107 @@ function BatchForm() {
         body: JSON.stringify(data),
       });
       fetchBatches(); // Refetch batches after submission
+      form.reset();
     } catch (e) {
       console.error(e);
     }
-    reset();
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Batch name</label>
-          <input {...register("batch_name", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.batch_name && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Bird type</label>
-            <input {...register("bird_type", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.bird_type && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Quantity</label>
-            <input type="number" {...register("quantity", { required: true, valueAsNumber: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.quantity && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Cost per bird</label>
-            <input type="number" step="0.01" {...register("cost_per_bird", { required: true, valueAsNumber: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.cost_per_bird && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Date in</label>
-          <input type="date" {...register("date_in", { required: true })} className="mt-1 block w-40 rounded border p-2" />
-          {errors.date_in && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Notes</label>
-          <textarea {...register("notes")} className="mt-1 block w-full rounded border p-2" rows={3} />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Batch</button>
-          <button type="button" onClick={() => reset()} className="px-4 py-2 rounded bg-slate-100">Reset</button>
-        </div>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create a New Batch</CardTitle>
+          <CardDescription>Enter the details of the new poultry batch.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="batch_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batch Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Broilers Week 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="bird_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bird Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Cobb 500" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 500" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cost_per_bird"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Per Bird</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 3.50" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="date_in"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date In</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Any additional notes" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Save Batch</Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Existing Batches</h2>
@@ -149,9 +252,38 @@ function BatchForm() {
   );
 }
 
+const expenseFormSchema = z.object({
+  batch_id: z.coerce.number().min(1, {
+    message: "Batch ID is required.",
+  }),
+  item: z.string().min(2, {
+    message: "Item must be at least 2 characters.",
+  }),
+  quantity: z.coerce.number().min(1, {
+    message: "Quantity must be at least 1.",
+  }),
+  cost_per_unit: z.coerce.number().min(0.01, {
+    message: "Cost per unit must be at least 0.01.",
+  }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Please enter a valid date.",
+  }),
+  description: z.string().optional(),
+});
+
 /* ----------------- Expense Form ----------------- */
 function ExpenseForm() {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const form = useForm({
+    resolver: zodResolver(expenseFormSchema),
+    defaultValues: {
+      batch_id: 0,
+      item: "",
+      quantity: 0,
+      cost_per_unit: 0,
+      date: "",
+      description: "",
+    },
+  });
   const [expenses, setExpenses] = useState([]);
 
   const fetchExpenses = async () => {
@@ -170,7 +302,6 @@ function ExpenseForm() {
   }, []);
 
   const onSubmit = async (data) => {
-    data.amount = parseFloat(data.amount);
     console.log("Expense payload:", data);
     try {
       await fetch(`${API_BASE_URL}/api/expenses/`, {
@@ -179,57 +310,107 @@ function ExpenseForm() {
         body: JSON.stringify(data),
       });
       fetchExpenses();
+      form.reset();
     } catch (e) {
       console.error(e);
     }
-    reset();
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Batch ID</label>
-          <input {...register("batch_id", { valueAsNumber: true, required: true })} className="mt-1 block w-40 rounded border p-2" />
-          {errors.batch_id && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Item</label>
-          <input {...register("item", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.item && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Quantity</label>
-          <input {...register("quantity", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.quantity && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Cost Per Unit</label>
-            <input type="number" step="0.01" {...register("cost_per_unit", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.cost_per_unit && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Date</label>
-            <input type="date" {...register("date", { required: true })} className="mt-1 block w-40 rounded border p-2" />
-            {errors.date && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Description</label>
-          <textarea {...register("description")} className="mt-1 block w-full rounded border p-2" rows={2} />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Expense</button>
-          <button type="button" onClick={() => reset()} className="px-4 py-2 rounded bg-slate-100">Reset</button>
-        </div>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Record an Expense</CardTitle>
+          <CardDescription>Enter the details of a new expense.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="batch_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batch ID</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="item"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Feed" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cost_per_unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Per Unit</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 25.50" {...field} />
+                    </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                    </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Any additional details" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Save Expense</Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Existing Expenses</h2>
@@ -248,9 +429,9 @@ function ExpenseForm() {
               <tr key={expense.id}>
                 <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.date}</Link></td>
                 <td className="p-2 border-b">{expense.item}</td>
-                <td className="p-2 border-b">{expense.cost_per_unit}</td>
+                <td className="p-2 border-b">{formatCurrency(expense.cost_per_unit)}</td>
                 <td className="p-2 border-b">{expense.quantity}</td>
-                <td className="p-2 border-b">{expense.total_amount}</td>
+                <td className="p-2 border-b">{formatCurrency(expense.total_amount)}</td>
               </tr>
             ))}
           </tbody>
@@ -263,9 +444,36 @@ function ExpenseForm() {
   );
 }
 
+const saleFormSchema = z.object({
+  batch_id: z.coerce.number().min(1, {
+    message: "Batch ID is required.",
+  }),
+  item: z.string().min(2, {
+    message: "Item must be at least 2 characters.",
+  }),
+  quantity: z.coerce.number().min(1, {
+    message: "Quantity must be at least 1.",
+  }),
+  cost_per_unit: z.coerce.number().min(0.01, {
+    message: "Price per unit must be at least 0.01.",
+  }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Please enter a valid date.",
+  }),
+});
+
 /* ----------------- Sale Form ----------------- */
 function SaleForm() {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const form = useForm({
+    resolver: zodResolver(saleFormSchema),
+    defaultValues: {
+      batch_id: 0,
+      item: "",
+      quantity: 0,
+      cost_per_unit: 0,
+      date: "",
+    },
+  });
   const [sales, setSales] = useState([]);
 
   const fetchSales = async () => {
@@ -284,7 +492,6 @@ function SaleForm() {
   }, []);
 
   const onSubmit = async (data) => {
-    data.amount = parseFloat(data.amount);
     console.log("Sale payload:", data);
     try {
       await fetch(`${API_BASE_URL}/api/sale/`, {
@@ -293,52 +500,94 @@ function SaleForm() {
         body: JSON.stringify(data),
       });
       fetchSales();
+      form.reset();
     } catch (e) {
       console.error(e);
     }
-    reset();
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Batch ID</label>
-          <input {...register("batch_id", { valueAsNumber: true, required: true })} className="mt-1 block w-40 rounded border p-2" />
-          {errors.batch_id && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Item</label>
-          <input {...register("item")} className="mt-1 block w-full rounded border p-2" />
-          {errors.item && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Price Per Unit</label>
-          <input {...register("cost_per_unit", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.cost_per_unit && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Quantity</label>
-            <input type="number" step="0.01" {...register("quantity", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.amount && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Date</label>
-            <input type="date" {...register("date", { required: true })} className="mt-1 block w-40 rounded border p-2" />
-            {errors.date && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Sale</button>
-          <button type="button" onClick={() => reset()} className="px-4 py-2 rounded bg-slate-100">Reset</button>
-        </div>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Record a Sale</CardTitle>
+          <CardDescription>Enter the details of a new sale.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="batch_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batch ID</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="item"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Broiler Chicken" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 10" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cost_per_unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price Per Unit</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 15.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Save Sale</Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Existing Sales</h2>
@@ -356,10 +605,10 @@ function SaleForm() {
             {sales.slice(0, 10).map((sale) => (
               <tr key={sale.id}>
                 <td className="p-2 border-b"><Link to={`/sale/${sale.id}`} className="text-blue-600 hover:underline">{sale.item}</Link></td>
-                <td className="p-2 border-b">{sale.cost_per_unit}</td>
+                <td className="p-2 border-b">{formatCurrency(sale.cost_per_unit)}</td>
                 <td className="p-2 border-b">{sale.quantity}</td>
                 <td className="p-2 border-b">{sale.date}</td>
-                <td className="p-2 border-b">{sale.total_amount}</td>
+                <td className="p-2 border-b">{formatCurrency(sale.total_amount)}</td>
               </tr>
             ))}
           </tbody>
@@ -372,9 +621,38 @@ function SaleForm() {
   );
 }
 
+const lossFormSchema = z.object({
+  batch_id: z.coerce.number().min(1, {
+    message: "Batch ID is required.",
+  }),
+  cause: z.string().min(2, {
+    message: "Cause must be at least 2 characters.",
+  }),
+  quantity: z.coerce.number().min(1, {
+    message: "Quantity must be at least 1.",
+  }),
+  value_loss: z.coerce.number().min(0.01, {
+    message: "Value loss must be at least 0.01.",
+  }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Please enter a valid date.",
+  }),
+  notes: z.string().optional(),
+});
+
 /* ----------------- Loss Form ----------------- */
 function LossForm() {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const form = useForm({
+    resolver: zodResolver(lossFormSchema),
+    defaultValues: {
+      batch_id: 0,
+      cause: "",
+      quantity: 0,
+      value_loss: 0,
+      date: "",
+      notes: "",
+    },
+  });
   const [losses, setLosses] = useState([]);
 
   const fetchLosses = async () => {
@@ -393,8 +671,6 @@ function LossForm() {
   }, []);
 
   const onSubmit = async (data) => {
-    data.quantity = parseInt(data.quantity || "0", 10);
-    data.value_loss = parseFloat(data.value_loss || "0");
     console.log("Loss payload:", data);
     try {
       await fetch(`${API_BASE_URL}/api/losses/`, {
@@ -403,57 +679,107 @@ function LossForm() {
         body: JSON.stringify(data),
       });
       fetchLosses();
+      form.reset();
     } catch (e) {
       console.error(e);
     }
-    reset();
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Batch ID</label>
-          <input {...register("batch_id", { required: true, valueAsNumber: true })} className="mt-1 block w-40 rounded border p-2" />
-          {errors.batch_id && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Cause</label>
-          <input {...register("cause", { required: true })} className="mt-1 block w-full rounded border p-2" />
-          {errors.cause && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Quantity</label>
-            <input type="number" {...register("quantity", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.quantity && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Value loss</label>
-            <input type="number" step="0.01" {...register("value_loss", { required: true })} className="mt-1 block w-full rounded border p-2" />
-            {errors.value_loss && <span className="text-red-600 text-sm">Required</span>}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Date</label>
-          <input type="date" {...register("date", { required: true })} className="mt-1 block w-40 rounded border p-2" />
-          {errors.date && <span className="text-red-600 text-sm">Required</span>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Notes</label>
-          <textarea {...register("notes")} className="mt-1 block w-full rounded border p-2" rows={2} />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button type="submit" className="px-4 py-2 rounded bg-slate-800 text-white">Save Loss</button>
-          <button type="button" onClick={() => reset()} className="px-4 py-2 rounded bg-slate-100">Reset</button>
-        </div>
-      </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Record a Loss</CardTitle>
+          <CardDescription>Enter the details of a new loss.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="batch_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batch ID</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cause"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cause of Loss</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Disease" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="value_loss"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Value Loss</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="e.g., 50.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Any additional notes" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Save Loss</Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Existing Losses</h2>

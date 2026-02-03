@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "@/lib/utils";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -100,16 +101,16 @@ export default function AllExpenses() {
                       <tr key={expense.id}>
                         <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.date}</Link></td>
                         <td className="p-2 border-b">{expense.item}</td>
-                        <td className="p-2 border-b">{expense.cost_per_unit}</td>
+                        <td className="p-2 border-b">{formatCurrency(expense.cost_per_unit)}</td>
                         <td className="p-2 border-b">{expense.quantity}</td>
-                        <td className="p-2 border-b">{expense.total_amount}</td>
+                        <td className="p-2 border-b">{formatCurrency(expense.total_amount)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr>
                       <td colSpan="4" className="p-2 border-t font-semibold text-right">Daily Total:</td>
-                      <td className="p-2 border-t font-semibold">{dailyTotal.toFixed(2)}</td>
+                      <td className="p-2 border-t font-semibold">{formatCurrency(dailyTotal)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -137,16 +138,16 @@ export default function AllExpenses() {
                       <tr key={expense.id}>
                         <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.date}</Link></td>
                         <td className="p-2 border-b">{expense.item}</td>
-                        <td className="p-2 border-b">{expense.cost_per_unit}</td>
+                        <td className="p-2 border-b">{formatCurrency(expense.cost_per_unit)}</td>
                         <td className="p-2 border-b">{expense.quantity}</td>
-                        <td className="p-2 border-b">{expense.total_amount}</td>
+                        <td className="p-2 border-b">{formatCurrency(expense.total_amount)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr>
                       <td colSpan="4" className="p-2 border-t font-semibold text-right">Batch Total:</td>
-                      <td className="p-2 border-t font-semibold">{batchTotal.toFixed(2)}</td>
+                      <td className="p-2 border-t font-semibold">{formatCurrency(batchTotal)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -169,16 +170,16 @@ export default function AllExpenses() {
                 <tr key={expense.id}>
                   <td className="p-2 border-b"><Link to={`/expense/${expense.id}`} className="text-blue-600 hover:underline">{expense.date}</Link></td>
                   <td className="p-2 border-b">{expense.item}</td>
-                  <td className="p-2 border-b">{expense.cost_per_unit}</td>
+                  <td className="p-2 border-b">{formatCurrency(expense.cost_per_unit)}</td>
                   <td className="p-2 border-b">{expense.quantity}</td>
-                  <td className="p-2 border-b">{expense.total_amount}</td>
+                  <td className="p-2 border-b">{formatCurrency(expense.total_amount)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
                 <td colSpan="4" className="p-2 border-t font-semibold text-right">Grand Total:</td>
-                <td className="p-2 border-t font-semibold">{grandTotal.toFixed(2)}</td>
+                <td className="p-2 border-t font-semibold">{formatCurrency(grandTotal)}</td>
               </tr>
             </tfoot>
           </table>

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -39,32 +44,51 @@ export default function Dashboard() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Finance Summary</h1>
-        <Link
-          to="/add-batch"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Create Entry
+        <Link to="/add-batch">
+          <Button>Create Entry</Button>
         </Link>
       </div>
-      <div className="flex flex-wrap gap-6">
-        {summaryData.map((batch) => (
-          <Link
-            to={`/batch-summary/${batch.batch_id}`}
-            key={batch.batch_id}
-            className="border border-gray-200 rounded-lg shadow-md p-6 w-80 block hover:shadow-lg transition-shadow duration-200"
-          >
-            <h2 className="text-xl font-semibold mb-4">{batch.batch_name}</h2>
-            <p className="mb-2">
-              <strong className="font-medium">Total Expenses:</strong> {batch.total_expenses}
-            </p>
-            <p className="mb-2">
-              <strong className="font-medium">Total Sales:</strong> {batch.total_sales}
-            </p>
-            <p className="mb-2">
-              <strong className="font-medium">Total Losses:</strong> {batch.total_losses}
-            </p>
-          </Link>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {summaryData.map((batch) => {
+          const profit = batch.total_sales - batch.total_expenses;
+          const isProfitable = profit > 0;
+
+          return (
+            <Link to={`/batch-summary/${batch.batch_id}`} key={batch.batch_id}>
+              <Card className="hover:shadow-lg transition-shadow duration-200">
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    {batch.batch_name}
+                    {isProfitable ? (
+                      <ArrowUpCircle className="text-green-500" />
+                    ) : (
+                      <ArrowDownCircle className="text-red-500" />
+                    )}
+                  </CardTitle>
+                  <CardDescription>Batch ID: {batch.batch_id}</CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="space-y-2">
+                    <p>
+                      <strong>Total Expenses:</strong> {formatCurrency(batch.total_expenses)}
+                    </p>
+                    <p>
+                      <strong>Total Sales:</strong> {formatCurrency(batch.total_sales)}
+                    </p>
+                    <p>
+                      <strong>Total Losses:</strong> {formatCurrency(batch.total_losses)}
+                    </p>
+                    <p className={`font-bold ${isProfitable ? 'text-green-600' : 'text-red-600'}`}>
+                      <strong>Profit:</strong> {formatCurrency(profit)}
+                    </p>
+                  </div>
+                </CardContent>
+
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
